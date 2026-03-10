@@ -1,4 +1,4 @@
-def GatherPatientData(fileName, processed):#p holds if the data is processed or not
+def GatherPatientData(fileName, processed):
     fileData = open(fileName, "r").read().splitlines()
     patientData = []
 
@@ -26,7 +26,8 @@ def FeatureInfermation(patientData, fileType):
             print("Enter the number of features within your data")
             length = int(input("       : "))
     
-    totalData = [[] for _ in range(length)]
+    processedData = [[] for _ in range(length)]
+    patientCount = 0
     for i in range(len(patientData)):
 
         for l in range(length):
@@ -36,15 +37,42 @@ def FeatureInfermation(patientData, fileType):
                 dataPoint = patientData[i][l]
 
             found = False
-            for k in range(len(totalData[l])):
-                if totalData[l][k][0] == dataPoint:
-                    totalData[l][k][1] += 1
+            for k in range(len(processedData[l])):
+                if processedData[l][k][0] == dataPoint:
+                    processedData[l][k][1] += 1
                     found = True
                     break
 
             if not found:
-                totalData[l].append([dataPoint, 1])
-                
+                processedData[l].append([dataPoint, 1])
+        patientCount += 1
+    DataOutput(processedData, patientCount)
+
+def DataOutput(data, count):
+    print("The feature information will be displayed in your chosen format, followed by the percentage of the data split relative to the overall data.")
+    print("Enter 1: If you want to sort data by feature")
+    print("Enter 2: If you want to sort data by population")
+    choice = int(input("       : "))
+
+    for i in range(len(data)):
+        try:
+            match(choice):
+                case 1:
+                    sortedData = sorted(data[i], key=lambda x: x[0])
+                case _:
+                    sortedData = sorted(data[i], key=lambda x: x[1])
+        except:
+            match(choice):
+                case 1:
+                    sortedData = sorted(data[i], key=lambda x: (x[0] == "?", x[0]))
+                case _:
+                    sortedData = sorted(data[i], key=lambda x: (x[1] == "?", x[1]))
+
+        print("     Data for,", i+1," feature")
+
+        for j in range(len(sortedData)):
+            print(sortedData[j], round(sortedData[j][1]/count*100,2))
+
 def GatherAllPatientData():
     totalFilesData = []
     chosen = False
@@ -112,13 +140,15 @@ def Menu():
         print("Enter 1: To collect the feature quantative and population")
         print("Enter 2: To collect a chosen feature quantative and population")
         print("Enter 3: To collect feature quantative and population based off stage clasifiaction")
-        print("Enter 4 ")
+        print("Enter 4: To collect data breakdown (Average, Range, Distrabution)")
+        print("Enter 5: To detect all missing or incorrct data")
+        print("Enter 6: To process wanted data into a CSV file")
         choice = int(input("       : "))
 
         patientData, fileType = GatherAllPatientData()
         match(choice):
             case 1:
-                FeatureInfermation(patientData, fileType)
+                FeatureInfermation(patientData, fileType)#done
             case 2:
                 print("add code")
             case 3:
@@ -126,15 +156,5 @@ def Menu():
 
     print("Thanks you for using this appcation")
     print("Have a greate day")
-
-    print("Enter 8:  To detect all missing or incorrect data from all unprocessed files")
-    print("Enter 9:  To detect all missing and incorrect data from all processed files")
-    print("Enter 10: To collect all missing and incorrect data from one file")
-    print("Enter 11: To process wanted data into a CVS file")
-    print("ENter 12: To collect the ranges for for each each sction of data based of outputs ")##
-    print("Enter 13: To collect the ranges for each feature from selected code")
-    print("Enter 14: To collect the average from each section of data based of outputs")
-    print("Enter 15: To collect the average from each section of data based of outputs ")
-
-
+    
 Menu()
