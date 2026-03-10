@@ -53,25 +53,35 @@ def DataOutput(data, count):
     print("Enter 1: If you want to sort data by feature")
     print("Enter 2: If you want to sort data by population")
     choice = int(input("       : "))
+    print()
+    print("Enter the feature number you would like to collect the data on")
+    print("Enter 0 if you would like to recive all feature data")
+    featureChoice = int(input(("       : ")))
+    
+    if featureChoice == 0:
+        length = len(data)
+    else:
+        length = 1
 
-    for i in range(len(data)):
+    for i in range(length):
         try:
             match(choice):
                 case 1:
-                    sortedData = sorted(data[i], key=lambda x: x[0])
+                    sortedData = sorted(data[featureChoice-1] if length == 1 else data[i],key=lambda x: x[0])
                 case _:
-                    sortedData = sorted(data[i], key=lambda x: x[1])
+                    sortedData = sorted(data[featureChoice-1] if length == 1 else data[i],key=lambda x: x[0])
         except:
             match(choice):
                 case 1:
-                    sortedData = sorted(data[i], key=lambda x: (x[0] == "?", x[0]))
+                    sortedData = sorted(data[featureChoice-1] if length == 1 else data[i],key=lambda x: (x[0] == "?", x[0]))
                 case _:
-                    sortedData = sorted(data[i], key=lambda x: (x[1] == "?", x[1]))
+                    sortedData = sorted(data[featureChoice-1] if length == 1 else data[i],key=lambda x: (x[1] == "?", x[1]))
 
         print("     Data for,", i+1," feature")
 
         for j in range(len(sortedData)):
             print(sortedData[j], round(sortedData[j][1]/count*100,2))
+    print()
 
 def GatherAllPatientData():
     totalFilesData = []
@@ -126,6 +136,7 @@ def GatherAllPatientData():
                 fileData = GatherPatientData(fileName, True)#Code assumes that use files are in comma seperated and all patient data is on a single row
                 fileType = 2
         totalFilesData += fileData
+    print()
     return(totalFilesData, fileType)
 
 def Menu():
@@ -134,15 +145,15 @@ def Menu():
     print()
     print("To use the this code you will need to chose a function which you would like too use.")
     print("Then the code will ask whcih files you could like to use data from")
+    print("Once you reach the output stage there will be an option to recive data for all features or a select feature")
     print()
     while running == True:
         print("Enter 0: To stop the running of this applcation")
         print("Enter 1: To collect the feature quantative and population")
-        print("Enter 2: To collect a chosen feature quantative and population")
-        print("Enter 3: To collect feature quantative and population based off stage clasifiaction")
-        print("Enter 4: To collect data breakdown (Average, Range, Distrabution)")
-        print("Enter 5: To detect all missing or incorrct data")
-        print("Enter 6: To process wanted data into a CSV file")
+        print("Enter 2: To collect feature quantative and population based off stage clasifiaction")
+        print("Enter 3: To collect data breakdown (Average, Range, Distrabution)")
+        print("Enter 4: To detect all missing or incorrct data")
+        print("Enter 5: To process wanted data into a CSV file")
         choice = int(input("       : "))
 
         patientData, fileType = GatherAllPatientData()
@@ -153,8 +164,12 @@ def Menu():
                 print("add code")
             case 3:
                 print("add code")
+            case 4:
+                print("add code 4")
+            case 5:
+                print("add cdoe 5")
 
     print("Thanks you for using this appcation")
     print("Have a greate day")
-    
+
 Menu()
