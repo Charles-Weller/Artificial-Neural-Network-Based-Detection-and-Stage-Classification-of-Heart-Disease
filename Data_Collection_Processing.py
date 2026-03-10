@@ -16,7 +16,7 @@ def GatherPatientData(fileName, processed):
 
     return(patientData)
 
-def FeatureInfermation(patientData, fileType):
+def FeatureInfermation(patientData, fileType, function):
     match(fileType):
         case 0:
             length = 76
@@ -46,9 +46,116 @@ def FeatureInfermation(patientData, fileType):
             if not found:
                 processedData[l].append([dataPoint, 1])
         patientCount += 1
-    DataOutput(processedData, patientCount)
+    if function == 0:
+        DataOutput(processedData, patientCount, None)
+    else:
+        return processedData, patientCount
 
-def DataOutput(data, count):
+
+def FeatureInfermationDeseaseClassifiaction(patientData, fileType, function):
+    match(fileType):
+        case 0:
+            length = 76
+        case 1:
+            length = 14
+        case _:
+            print("Enter the number of features within your data")
+            length = int(input("       : "))
+    
+    processedData = [[[] for _ in range(length)] for _ in range(5)]
+    patientCount = 0
+    for i in range(len(patientData)):
+
+        if patientData[i][57] == "0":
+            n = 0
+        elif patientData[i][57] == "1":
+            n = 1
+        elif patientData[i][57] == "2":
+            n = 2
+        elif patientData[i][57] == "3":
+            n = 3
+        else:
+            n = 4
+
+        for l in range(76):
+            try:
+                dataPoint = float(patientData[i][l])
+            except:
+                dataPoint = patientData[i][l]
+
+            found = False
+            for k in range(len(processedData[n][l])):
+                if processedData[n][l][k][0] == dataPoint:
+                    processedData[n][l][k][1] += 1
+                    found = True
+                    break
+
+            if not found:
+                processedData[n][l].append([dataPoint, 1])
+        patientCount += 1
+    if function == 0:
+        for i in range(5):
+            DataOutput(processedData[i], patientCount, i)
+    else:
+        return processedData, patientCount
+
+def MissingData(patientData, fileType, function):
+    totalData, patientCount = FeatureInfermation(patientData, fileType, 1)
+    numberOfFeatures = len(totalData)
+    updatedData = [[] for _ in range(numberOfFeatures)]
+    errorData = [[] for _ in range(numberOfFeatures)]
+
+    if numberOfFeatures == 76:
+        NON = [8,9,11,19,20,21,27,28,30,31,32,33,34,35,36,41,42,44,45,50,54,55,56,59,60,61,62,63,64,65,66,67,73]
+    elif numberOfFeatures == 14:
+        NON = [2,3,4]#Non zero Numbers
+    else:
+        enter =  False
+        NON = []
+        print("Enter the feature number where the it is not posible for the value to be 0")
+        print("Enter 0 : When you are enteded all feature id's needed")
+        print("Enter -1: To see the enteded features")
+        while enter == False:
+            featureChoice = int(input("       : "))
+
+            if featureChoice == -1:
+                NON = sorted(set(NON))
+                print(NON)
+            elif featureChoice == 0:
+                enter = True
+            else:
+                NON.append(featureChoice)
+
+    for i in range(numberOfFeatures):
+        for j in range(len(totalData[i])):
+            if i in NON and totalData[i][j][0] == 0.0:
+                errorData[i].append(totalData[i][j])
+            elif totalData[i][j][0] == -9.0 or totalData[i][j][0] == "?":
+                errorData[i].append(totalData[i][j])
+            else:
+                updatedData[i].append(totalData[i][j])
+    if function == 0:
+        DataOutput(errorData, patientCount, None)
+    else:
+        return updatedData, patientCount
+
+def FeatureStatistics(data, fileType):
+    updatedData, patientCount = MissingData(data, fileType, 1)
+    print("Enter the feature number you would like to collect the data on")
+    print("Enter 0 if you would like to recive all feature data")
+    featureChoice = int(input(("       : ")))
+
+    if featureChoice == 0:
+        length = len(data)
+    else:
+        length = 1
+
+    statistics = [[] for _ in range(length)]
+    for i in range(length):
+        print("g")
+
+
+def DataOutput(data, count, classification):
     print("The feature information will be displayed in your chosen format, followed by the percentage of the data split relative to the overall data.")
     print("Enter 1: If you want to sort data by feature")
     print("Enter 2: If you want to sort data by population")
@@ -65,11 +172,10 @@ def DataOutput(data, count):
 
     for i in range(length):
         try:
-            match(choice):
-                case 1:
-                    sortedData = sorted(data[featureChoice-1] if length == 1 else data[i],key=lambda x: x[0])
-                case _:
-                    sortedData = sorted(data[featureChoice-1] if length == 1 else data[i],key=lambda x: x[0])
+            if choice == 1:
+                sortedData = sorted(data[featureChoice-1] if length == 1 else data[i],key=lambda x: x[0])
+            else:
+                sortedData = sorted(data[featureChoice-1] if length == 1 else data[i],key=lambda x: x[0])
         except:
             match(choice):
                 case 1:
@@ -77,10 +183,13 @@ def DataOutput(data, count):
                 case _:
                     sortedData = sorted(data[featureChoice-1] if length == 1 else data[i],key=lambda x: (x[1] == "?", x[1]))
 
-        print("     Data for,", i+1," feature")
+        print("     Data for,", i+1, "feature", ("Classification " + str(classification)) if classification is not None else "")
 
-        for j in range(len(sortedData)):
-            print(sortedData[j], round(sortedData[j][1]/count*100,2))
+        if sortedData == []:
+            print("There is no missing or incorrect data")
+        else:
+            for j in range(len(sortedData)):
+                print(sortedData[j], (round(sortedData[j][1]/count*100,2),"%"))
     print()
 
 def GatherAllPatientData():
@@ -136,7 +245,6 @@ def GatherAllPatientData():
                 fileData = GatherPatientData(fileName, True)#Code assumes that use files are in comma seperated and all patient data is on a single row
                 fileType = 2
         totalFilesData += fileData
-    print()
     return(totalFilesData, fileType)
 
 def Menu():
@@ -157,15 +265,16 @@ def Menu():
         choice = int(input("       : "))
 
         patientData, fileType = GatherAllPatientData()
+        print()
         match(choice):
             case 1:
-                FeatureInfermation(patientData, fileType)#done
+                FeatureInfermation(patientData, fileType, 0)#done
             case 2:
-                print("add code")
+                FeatureInfermationDeseaseClassifiaction(patientData, fileType, 0)# done
             case 3:
                 print("add code")
             case 4:
-                print("add code 4")
+                MissingData(patientData, fileType, 0)#done
             case 5:
                 print("add cdoe 5")
 
