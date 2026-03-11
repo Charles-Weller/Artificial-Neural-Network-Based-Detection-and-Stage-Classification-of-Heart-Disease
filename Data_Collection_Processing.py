@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+
 def GatherPatientData(fileName, processed):
     fileData = open(fileName, "r").read().splitlines()
     patientData = []
@@ -13,7 +16,6 @@ def GatherPatientData(fileName, processed):
     else:
         for line in fileData:
             patientData.append(line.split(","))
-
     return(patientData)
 
 def FeatureInfermation(patientData, fileType, function):
@@ -50,7 +52,6 @@ def FeatureInfermation(patientData, fileType, function):
         DataOutput(processedData, patientCount, None)
     else:
         return processedData, patientCount
-
 
 def FeatureInfermationDeseaseClassifiaction(patientData, fileType, function):
     match(fileType):
@@ -140,19 +141,169 @@ def MissingData(patientData, fileType, function):
         return updatedData, patientCount
 
 def FeatureStatistics(data, fileType):
-    updatedData, patientCount = MissingData(data, fileType, 1)
+    import matplotlib.pyplot as plt
+    classifiedData, _ = FeatureInfermationDeseaseClassifiaction(data, fileType, 1)
+
     print("Enter the feature number you would like to collect the data on")
     print("Enter 0 if you would like to recive all feature data")
     featureChoice = int(input(("       : ")))
+    print()
+
+    print("Enter 1 if you would like to show a scatter graph")
+    print("Enter 0 otherwise")
+    showGraph = int(input("       : "))
+    print()
 
     if featureChoice == 0:
-        length = len(data)
+        length = len(classifiedData[0])
     else:
         length = 1
 
-    statistics = [[] for _ in range(length)]
     for i in range(length):
-        print("g")
+        if length == 1:
+            i = featureChoice - 1
+
+        print("     Data for, feature", i + 1)
+        print("Classification statistics:")
+
+        xValues = []
+        yValues = []
+
+        for j in range(5):
+            classNumericValues = []
+
+            for l in range(len(classifiedData[j][i])):
+                try:
+                    value = float(classifiedData[j][i][l][0])
+                    count = classifiedData[j][i][l][1]
+
+                    for k in range(count):
+                        classNumericValues.append(value)
+                        xValues.append(j)
+                        yValues.append(value)
+                except:
+                    pass
+
+            if len(classNumericValues) == 0:
+                print("Classification", j, ": No valid numeric data")
+                print()
+            else:
+                classAverage = sum(classNumericValues) / len(classNumericValues)
+                classMinimum = min(classNumericValues)
+                classMaximum = max(classNumericValues)
+                classRange = classMaximum - classMinimum
+
+                print("Classification", j)
+                print("Average:", round(classAverage, 4))
+                print("Min:", classMinimum)
+                print("Max:", classMaximum)
+                print("Range:", classRange)
+                print("Valid data points:", len(classNumericValues))
+                print()
+
+        if showGraph == 1:
+            if len(yValues) == 0:
+                print("No valid numeric data available to plot for feature", i + 1)
+                print()
+            else:
+                plt.figure()
+                plt.scatter(xValues, yValues)
+                plt.title("Feature " + str(i + 1) + " by Classification")
+                plt.xlabel("Classification")
+                plt.ylabel("Feature Value")
+                plt.xticks([0, 1, 2, 3, 4])
+                plt.show()
+
+    print()
+
+
+def Normalisation(x: np.ndarray):# Min Max 
+    x = np.asarray(x, dtype=np.float64)
+
+    min = np.min(x)
+    max = np.max(x)
+    range = max - min
+
+    if np.isclose(range, 0.0):
+        return np.zeros_like(x, dtype=np.float64)
+    
+    return (x - min) / range
+
+def SaveNewData(patientData, fileType):   
+    enter =  False
+    wantedFeature = []
+    print("Enter the feature number you would like to remove")
+    print("Enter 0 : When you are enteded all feature id's wanted")
+    print("Enter -1: To see the enteded features")
+    while enter == False:
+        featureChoice = int(input("       : "))
+
+        if featureChoice == -1:
+            wantedFeature = sorted(set(wantedFeature))
+            print(wantedFeature)
+        elif featureChoice == 0:
+            enter = True
+        else:
+            wantedFeature.append(featureChoice)
+
+    wantedFeature = sorted(set(wantedFeature), reverse=True)
+
+    for i in range(len(patientData)):
+        for j in range(len(wantedFeature)):
+            del patientData[i][wantedFeature[j]-1]
+    print()
+    print("Enter 1 if you would like to normalise your dataset, Otherwise enter 0")
+    normChoice = int(input("       : "))
+    try:
+        if normChoice == 1:  
+            data = np.asarray(patientData, dtype=np.float64)
+        for j in range(data.shape[1]):
+            data[:, j] = Normalisation(data[:, j])
+
+            patientData = data.tolist()
+        else:
+            pass
+    except:
+        print()
+        print("Normalisation failed due to the presence of non-numeric data")
+    print()
+
+    if fileType == 0:
+        columnNames = ["id", "ccf", "age", "sex", "painloc", "painexer", "relrest", "pncaden", "cp", "tresrbps", "htn", "chol", "smoke", "cigs", "years","fbs", 
+                       "dm", "famhist", "restecg", "ekgmo", "ekgday", "ekgyr", "dig", "prog", "nitr", "pro", "diuretic", "proto", "thaldur", "thaltime", "met", 
+                       "thalach", "thalrest", "tpeakbps", "tpeakbpd", "dummy", "trestbpd", "exang", "xhypo", "oldpeak", "slope", "rldv5", "rldv5e", "ca", "restckm", 
+                       "exerckm", "restef", "restwm", "exeref", "exerwm", "thal", "thalsev", "thalpul", "earlobe", "cmo", "cday", "cyr", "num", "lmt", "ladprox", 
+                       "laddist", "diag", "cxmain", "ramus", "om1", "om2", "rcaprox", "rcadist", "lvx1", "lvx2", "lvx3", "lvx4", "lvf", "cathef", "junk", "name"]
+    elif fileType == 1:
+        columnNames
+    else:
+        enter =  False
+        columnNames = []
+        print("Enter the feature headers (header need to be ended in order)")
+        print("Enter 0 : When you are enteded all feature id's wanted")
+        print("Enter -1: To see the enteded features")
+        while enter == False:
+            featureChoice = input("       : ")
+
+            if featureChoice == "-1":
+                print(columnNames)
+            elif featureChoice == "0":
+                enter = True
+            else:
+                columnNames.append(featureChoice)
+    
+    print("Enter the name which you would like to file to be called")
+    choicenFileName = input("       : ")
+
+    wantedFeature = sorted(set(wantedFeature), reverse=True)
+
+    for l in range(len(wantedFeature)):
+        del columnNames[wantedFeature[l]-1]
+    df = pd.DataFrame(patientData, columns=columnNames)
+    df.to_csv(choicenFileName+".csv", index=False)
+    print()
+    print("CSV saved successfully.")
+    print()
 
 
 def DataOutput(data, count, classification):
@@ -184,7 +335,6 @@ def DataOutput(data, count, classification):
                     sortedData = sorted(data[featureChoice-1] if length == 1 else data[i],key=lambda x: (x[1] == "?", x[1]))
 
         print("     Data for,", i+1, "feature", ("Classification " + str(classification)) if classification is not None else "")
-
         if sortedData == []:
             print("There is no missing or incorrect data")
         else:
@@ -242,7 +392,9 @@ def GatherAllPatientData():
                 print("Enter the name of the file you would like to get data from")
                 print("the file type will also need to be added (e.g: .csv, .data, ...)")
                 fileName = input("       : ")
-                fileData = GatherPatientData(fileName, True)#Code assumes that use files are in comma seperated and all patient data is on a single row
+                fileData = GatherPatientData(fileName, True)#Code assumes that use files are in comma seperated format and all patient data is on a single row
+                if fileName.lower().endswith(".csv"):
+                    fileData = fileData[1:]
                 fileType = 2
         totalFilesData += fileData
     return(totalFilesData, fileType)
@@ -268,15 +420,15 @@ def Menu():
         print()
         match(choice):
             case 1:
-                FeatureInfermation(patientData, fileType, 0)#done
+                FeatureInfermation(patientData, fileType, 0)
             case 2:
-                FeatureInfermationDeseaseClassifiaction(patientData, fileType, 0)# done
+                FeatureInfermationDeseaseClassifiaction(patientData, fileType, 0)
             case 3:
-                print("add code")
+                FeatureStatistics(patientData, fileType)
             case 4:
-                MissingData(patientData, fileType, 0)#done
+                MissingData(patientData, fileType, 0)
             case 5:
-                print("add cdoe 5")
+                SaveNewData(patientData, fileType)
 
     print("Thanks you for using this appcation")
     print("Have a greate day")
